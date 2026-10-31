@@ -1,0 +1,22 @@
+# NEXUS requirements traceability
+
+Evidence refers to the stabilization run recorded in [test_results.md](test_results.md). PASS means the implementation and the specified verification were both completed; PARTIAL identifies a real limitation or unavailable environment.
+
+| Requirement | Module | Implementation | Verification / evidence | Status | Remaining issue |
+|---|---|---|---|---|---|
+| Unified interface and navigation | Frontend | `frontend/src/main.tsx`, module studios | Browser smoke visited Geometry, Thermal, Performance, Neural, and Hardware; all rendered | PASS | Overview cards remain intentionally lightweight |
+| C++ backend architecture | Backend/core | `backend/api/main.cpp`, `core/`, CMake targets | Clean CMake configure/build and live API checks | PASS | Lightweight socket server rather than a third-party HTTP framework |
+| ASCII STL parsing and visualization | Geometry | `core/geometry/geometry_parser.*`, `frontend/src/GeometryStudio.tsx` | Live sample parsed to 4 triangles; browser rendered viewer; malformed/non-finite tests passed | PASS | Binary STL and CSV quoting unsupported by design |
+| Thermal FEM assembly and comparison | Thermal | `core/thermal/thermal_solver.*`, `results/thermal/` | Focused test and exported convergence CSV; errors 1.25, 0.3125, 0.078125, 0.01953125 °C | PASS | Dense solver is intended for the small 1D assignment |
+| Serial/parallel benchmarking | Performance | `core/performance/performance_benchmark.*` | Larger live run: 240 cases, 40 elements, 3.08× at 4 workers, agreement difference 0 | PASS | Raw timings show overhead/noise; no general speedup claim |
+| Hardware architecture and simulation | Hardware | `core/hardware/hardware_adapters.*`, `docs/hardware.md` | Discovery, connection, timeout, recovery, telemetry, invalid ID tested live | PASS | No physical hardware access is implemented or claimed |
+| Manual backpropagation and finite differences | Neural | `core/neural/neural_regression.*` | Four gradient differences ≤ 1.13e-10; 100-step loss history verified | PASS | Single-sample assignment only |
+| Validation and error handling | All modules | Core validators and API status handling | Invalid thermal, geometry, performance, neural, and hardware requests exercised | PASS | Error-message JSON escaping is lightweight and should be hardened before public deployment |
+| Exports | Thermal/performance/neural/geometry | Exporter and frontend CSV buttons | Thermal CSV/SVG files present; browser UI exposes CSV export for performance/neural/thermal | PARTIAL | Geometry viewer has import/inspection but no derived export button |
+| Cancellation and safe completion | Performance/frontend | `AbortController`, joined worker threads | Worker joins and exception tests pass; frontend cancellation control exists | PARTIAL | Server-side benchmark continues after client cancellation; no streaming progress channel |
+| Documentation | Repository | `README.md`, `docs/*.md` | All six module docs, architecture, packaging, audit, report, demo, and AI log added | PASS | Handwritten appendix requires developer action |
+| Tests | C++/API/frontend | Six focused CTest targets, smoke test, `scripts/api_integration_test.py` | Clean CTest 6/6, API integration PASS, frontend build PASS | PASS | Browser smoke remains a manual/in-app evidence step |
+| Version control | Repository | Git metadata | Git was absent at audit start; initialization and commits are pending in this stabilization pass | PARTIAL | Commit identity should be checked by candidate before submission |
+| Standalone Windows package | Packaging | `packaging/windows/Launch.cpp`, `docs/windows_packaging.md`, CPack install rules | Configuration and instructions prepared; no Windows host available | PARTIAL | Windows executable and clean-machine launch are NOT VERIFIED |
+| Report and demo | Submission | `docs/submission_report.md`, `docs/demo_script.md`, evidence checklist | Actual results and practical demo sequence documented | PARTIAL | Timestamped recording/screenshots remain manual evidence collection |
+| AI-use disclosure | Submission | `docs/ai_usage_log.md` | Known conversation history and repository evidence recorded; unknown developer details marked | PASS | Developer must confirm ownership/contribution statements |
