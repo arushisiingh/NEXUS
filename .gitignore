@@ -1,0 +1,14 @@
+build/
+build-*/
+frontend/node_modules/
+frontend/dist/
+frontend/tsconfig.tsbuildinfo
+.DS_Store
+*.user
+*.suo
+*.vcxproj*
+*.ninja
+compile_commands.json
+results/generated/
+*.log
+*.zip

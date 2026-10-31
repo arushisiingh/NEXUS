@@ -1,0 +1,5 @@
+#include <cmath>
+#include <iostream>
+#include <stdexcept>
+#include "core/geometry/geometry_parser.hpp"
+int main() { try { const std::string stl="solid t\n facet normal 0 0 1\n  outer loop\n   vertex 0 0 0\n   vertex 1 0 0\n   vertex 0 1 0\n  endloop\n endfacet\nendsolid t\n"; const auto mesh=nexus::geometry::parse_ascii_stl(stl); if(mesh.triangles.size()!=1 || std::abs(nexus::geometry::geometry_statistics(mesh).length_x_m-1)>1e-12) throw std::runtime_error("STL mismatch"); const auto csv=nexus::geometry::parse_temperature_csv("node_id,x_m,y_m,z_m,temperature_C\n1,0,0,0,20\n2,1,0,0,40\n"); if(csv.nodes.size()!=2 || csv.average_temperature_C!=30) throw std::runtime_error("CSV mismatch"); bool rejected=false; try {(void)nexus::geometry::parse_temperature_csv("node_id,x_m,y_m,z_m,temperature_C\n1,nan,0,0,20\n");} catch(const std::invalid_argument&) {rejected=true;} if(!rejected) throw std::runtime_error("non-finite CSV accepted"); std::cout<<"geometry focused: PASS\n"; return 0; } catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;} }

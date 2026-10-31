@@ -1,0 +1,4 @@
+#include <iostream>
+#include <stdexcept>
+#include "core/performance/performance_benchmark.hpp"
+int main() { try { nexus::performance::BenchmarkConfig c; c.case_count=8; c.mesh_size=10; c.seed=7; c.worker_counts={1,2}; const auto a=nexus::performance::generate_workload(c); const auto b=nexus::performance::generate_workload(c); if(a.cases.size()!=8 || a.cases[0].parameters.conductivity_W_mK!=b.cases[0].parameters.conductivity_W_mK) throw std::runtime_error("workload is not reproducible"); const auto serial=nexus::performance::run_serial(a); const auto parallel=nexus::performance::run_parallel(a,2); const auto agreement=nexus::performance::compare_results(a,serial,parallel); if(!agreement.agreement || agreement.maximum_absolute_temperature_difference_C>1e-8) throw std::runtime_error("parallel agreement mismatch"); std::cout<<"performance focused: PASS\n"; return 0; } catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;} }

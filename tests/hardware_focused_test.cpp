@@ -1,0 +1,4 @@
+#include <iostream>
+#include <stdexcept>
+#include "core/hardware/hardware_adapters.hpp"
+int main() { try { nexus::hardware::HardwareManager h; if(h.discover().size()!=3) throw std::runtime_error("discovery count mismatch"); const std::string id="arduino-nano-rp2040-connect"; if(h.connect(id).state!=nexus::hardware::ConnectionState::Connected) throw std::runtime_error("connect failed"); if(h.simulate_failure(id).state!=nexus::hardware::ConnectionState::Fault) throw std::runtime_error("failure simulation failed"); if(h.recover(id).state!=nexus::hardware::ConnectionState::Connected) throw std::runtime_error("recovery failed"); bool rejected=false; try{(void)h.connect("invalid");}catch(const std::invalid_argument&){rejected=true;} if(!rejected) throw std::runtime_error("invalid ID accepted"); std::cout<<"hardware focused: PASS\n"; return 0; } catch(const std::exception&e){std::cerr<<e.what()<<'\n';return 1;} }
