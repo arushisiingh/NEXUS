@@ -2,7 +2,7 @@
 
 ## Verification status
 
-Status: **NOT VERIFIED**. Development and all executed builds in this workspace are macOS builds. No Windows 11 host, Visual Studio toolchain, or clean-machine test was available during stabilization. The configuration below is prepared for a Windows build but must not be represented as a tested executable.
+Status: **CI CONFIGURED; NOT YET EXECUTED IN THIS WORKSPACE**. Development and local builds are macOS builds. The GitHub Actions workflow at `.github/workflows/windows-build.yml` uses a hosted `windows-2022` runner to perform the Windows build, tests, packaged-backend smoke test, and ZIP artifact upload. Until that workflow has completed successfully, the Windows executable remains **NOT VERIFIED**.
 
 ## Required build environment
 
@@ -26,7 +26,7 @@ cmake --build build-win --config Release
 ctest --test-dir build-win -C Release --output-on-failure
 ```
 
-The `WIN32` CMake branch builds `nexus-launcher.exe` from `packaging/windows/Launch.cpp`. Install a staging tree with:
+The `WIN32` CMake branch builds `Launch.exe` from `packaging/windows/Launch.cpp`. Install a staging tree with:
 
 ```powershell
 cmake --install build-win --config Release --prefix package
@@ -35,7 +35,27 @@ Copy-Item -Recurse -Force docs package\docs
 Copy-Item -Recurse -Force data package\data
 ```
 
-The expected package contains `nexus-launcher.exe`, `bin\nexus-api.exe`, `frontend\dist\index.html`, assets, documentation, sample data, and no developer-specific absolute paths. Rename `nexus-launcher.exe` to `Launch.exe` for the submitted package.
+The expected package contains `Launch.exe`, `bin\nexus-api.exe`, `frontend\dist\index.html`, assets, documentation, sample data, and no developer-specific absolute paths.
+
+## GitHub Actions workflow
+
+Run the workflow from the repository's **Actions** tab using **NEXUS Windows build → Run workflow**, or push to `main` / open a pull request. The workflow:
+
+1. Uses the hosted `windows-2022` runner, configures Visual Studio 2022's x64 MSVC environment with `ilammy/msvc-dev-cmd`, and uses C++17, CMake, Node.js 20, npm, and Python.
+2. Runs `npm ci` and `npm run build` for the frontend.
+3. Configures the Release C++ build with the static MSVC runtime, builds the API, launcher, and tests, and runs CTest.
+4. Installs the package into a relative staging directory and runs CPack to create the Windows ZIP.
+5. Inspects executable dependencies and fails if an unstaged dynamic MSVC runtime is required.
+6. Starts `package\bin\nexus-api.exe` on port 8081, polls `/api/health` for up to 30 seconds, verifies the served frontend root, and runs `scripts/api_integration_test.py`.
+7. Terminates the packaged backend and uploads both the ZIP and preserved build/test logs.
+
+The generated ZIP is uploaded as `NEXUS-Windows-<commit-sha>`. Build logs are uploaded as `NEXUS-Windows-logs-<commit-sha>` even when a workflow step fails.
+
+The workflow does not claim interactive GUI verification: it tests the packaged backend and static frontend over HTTP. It also does not claim a clean physical Windows machine; the runner is an ephemeral hosted CI environment.
+
+## Current build and test result
+
+The workflow was added and its YAML syntax was checked locally. The macOS regression path was reconfigured and rebuilt successfully after the Windows-only CMake target-name change. The Windows runner has **not yet been executed from this repository**, so there is no honest Windows CTest, ZIP, or artifact result to report here yet. After a successful Actions run, record the run URL, CTest summary, health response, frontend HTTP status, ZIP artifact name, and any warnings in `docs/test_results.md`.
 
 ## Runtime behavior
 

@@ -1,0 +1,181 @@
+name: NEXUS Windows build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nexus-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test-package:
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Configure MSVC x64 developer environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Show toolchain versions
+        run: |
+          cmake --version | Tee-Object -FilePath toolchain-versions.log
+          node --version | Tee-Object -FilePath toolchain-versions.log -Append
+          npm --version | Tee-Object -FilePath toolchain-versions.log -Append
+          python --version | Tee-Object -FilePath toolchain-versions.log -Append
+
+      - name: Build frontend production assets
+        working-directory: frontend
+        run: |
+          $ErrorActionPreference = 'Stop'
+          npm.cmd ci 2>&1 | Tee-Object -FilePath ../frontend-install.log
+          if ($LASTEXITCODE -ne 0) { throw "npm ci failed with exit code $LASTEXITCODE" }
+          npm.cmd run build 2>&1 | Tee-Object -FilePath ../frontend-build.log
+          if ($LASTEXITCODE -ne 0) { throw "frontend build failed with exit code $LASTEXITCODE" }
+
+      - name: Configure Windows C++17 Release build
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path build-win/logs | Out-Null
+          cmake -S . -B build-win -G "Visual Studio 17 2022" -A x64 `
+            -DNEXUS_BUILD_TESTS=ON `
+            -DNEXUS_ENABLE_GTEST=OFF `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded `
+            2>&1 | Tee-Object -FilePath build-win/logs/cmake-configure.log
+          if ($LASTEXITCODE -ne 0) { throw "CMake configure failed with exit code $LASTEXITCODE" }
+
+      - name: Compile C++ backend and tests
+        run: |
+          $ErrorActionPreference = 'Stop'
+          cmake --build build-win --config Release --parallel 2>&1 | Tee-Object -FilePath build-win/logs/cmake-build.log
+          if ($LASTEXITCODE -ne 0) { throw "C++ build failed with exit code $LASTEXITCODE" }
+
+      - name: Run CTest
+        run: |
+          $ErrorActionPreference = 'Stop'
+          ctest --test-dir build-win -C Release --output-on-failure 2>&1 | Tee-Object -FilePath build-win/logs/ctest.log
+          if ($LASTEXITCODE -ne 0) { throw "CTest failed with exit code $LASTEXITCODE" }
+
+      - name: Stage standalone package
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (Test-Path package) { Remove-Item package -Recurse -Force }
+          cmake --install build-win --config Release --prefix package 2>&1 | Tee-Object -FilePath build-win/logs/cmake-install.log
+          if ($LASTEXITCODE -ne 0) { throw "CMake install failed with exit code $LASTEXITCODE" }
+          if (-not (Test-Path package/Launch.exe)) { throw 'Launch.exe was not staged' }
+          if (-not (Test-Path package/bin/nexus-api.exe)) { throw 'nexus-api.exe was not staged' }
+          if (-not (Test-Path package/frontend/dist/index.html)) { throw 'frontend assets were not staged' }
+
+          # Release builds use the static MSVC runtime. Fail if the executable
+          # unexpectedly requires a redistributable DLL that was not staged.
+          $dependents = & dumpbin.exe /dependents package/bin/nexus-api.exe 2>&1
+          if ($LASTEXITCODE -ne 0) { throw 'dumpbin dependency inspection failed' }
+          if ($dependents -match 'VCRUNTIME|MSVCP') {
+            throw 'A dynamic MSVC runtime dependency was found; stage its DLL before packaging.'
+          }
+
+      - name: Generate CPack Windows ZIP
+        run: |
+          $ErrorActionPreference = 'Stop'
+          cpack --config build-win/CPackConfig.cmake -C Release --verbose 2>&1 | Tee-Object -FilePath build-win/logs/cpack.log
+          if ($LASTEXITCODE -ne 0) { throw "CPack failed with exit code $LASTEXITCODE" }
+          $archives = @(Get-ChildItem build-win -Filter '*.zip' -File)
+          if ($archives.Count -ne 1) { throw "Expected exactly one Windows ZIP, found $($archives.Count)" }
+          Add-Content build-win/logs/cpack.log "Generated archive: $($archives[0].FullName)"
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::OpenRead($archives[0].FullName)
+          try {
+            $names = @($archive.Entries | ForEach-Object {
+              ($_.FullName -replace '\\', '/') -replace '^[^/]+/', ''
+            })
+            foreach ($required in @('Launch.exe', 'bin/nexus-api.exe', 'frontend/dist/index.html', 'docs/windows_packaging.md')) {
+              if (-not ($names -contains $required)) { throw "ZIP is missing $required. Contents: $($names -join ', ')" }
+            }
+          } finally {
+            $archive.Dispose()
+          }
+
+      - name: Launch staged backend and verify health/frontend
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $serverLog = Join-Path $PWD 'build-win/logs/packaged-backend.stdout.log'
+          $serverErrorLog = Join-Path $PWD 'build-win/logs/packaged-backend.stderr.log'
+          $server = Start-Process -FilePath (Join-Path $PWD 'package/bin/nexus-api.exe') `
+            -ArgumentList '8081' -WorkingDirectory (Join-Path $PWD 'package') `
+            -RedirectStandardOutput $serverLog -RedirectStandardError $serverErrorLog -PassThru
+          "NEXUS_BACKEND_PID=$($server.Id)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+          $health = $null
+          $deadline = (Get-Date).AddSeconds(30)
+          while ((Get-Date) -lt $deadline) {
+            if ($server.HasExited) { throw "Packaged backend exited with code $($server.ExitCode)" }
+            try {
+              $health = Invoke-RestMethod -Uri 'http://127.0.0.1:8081/api/health' -TimeoutSec 3
+              if ($health.api_status -eq 'ok' -and $health.backend_status -eq 'online') { break }
+            } catch { }
+            Start-Sleep -Milliseconds 500
+          }
+          if ($null -eq $health) { throw 'Timed out waiting for packaged backend health endpoint' }
+          $root = Invoke-WebRequest -Uri 'http://127.0.0.1:8081/' -TimeoutSec 5
+          if ($root.StatusCode -ne 200 -or $root.Content -notmatch 'id="root"') {
+            throw 'Packaged backend did not serve the frontend root element'
+          }
+          @{ health = $health; frontend_status = $root.StatusCode } |
+            ConvertTo-Json -Depth 5 | Tee-Object -FilePath build-win/logs/packaged-smoke.json
+
+      - name: Run live API integration checks
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python scripts/api_integration_test.py 2>&1 | Tee-Object -FilePath build-win/logs/api-integration.log
+          if ($LASTEXITCODE -ne 0) { throw "API integration failed with exit code $LASTEXITCODE" }
+
+      - name: Terminate packaged backend
+        if: always()
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:NEXUS_BACKEND_PID) {
+            $process = Get-Process -Id ([int]$env:NEXUS_BACKEND_PID) -ErrorAction SilentlyContinue
+            if ($null -ne $process) {
+              Stop-Process -Id $process.Id
+              $process.WaitForExit(5000)
+              if (-not $process.HasExited) { Stop-Process -Id $process.Id -Force }
+            }
+          }
+
+      - name: Upload Windows ZIP
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NEXUS-Windows-${{ github.sha }}
+          path: build-win/*.zip
+          if-no-files-found: error
+
+      - name: Upload build and test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NEXUS-Windows-logs-${{ github.sha }}
+          path: |
+            *.log
+            build-win/logs/
+          if-no-files-found: warn

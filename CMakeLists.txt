@@ -88,6 +88,7 @@ install(FILES README.md CMakeLists.txt config/nexus.example.json DESTINATION .)
 
 if (WIN32)
     add_executable(nexus-launcher WIN32 packaging/windows/Launch.cpp)
+    set_target_properties(nexus-launcher PROPERTIES OUTPUT_NAME "Launch")
     install(TARGETS nexus-launcher RUNTIME DESTINATION .)
 endif()
 
