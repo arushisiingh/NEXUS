@@ -1,0 +1,8 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    { "label": "NEXUS: configure C++", "type": "shell", "command": "cmake -S . -B build -DNEXUS_BUILD_TESTS=ON", "problemMatcher": [] },
+    { "label": "NEXUS: build C++", "type": "shell", "command": "cmake --build build --config Release", "dependsOn": "NEXUS: configure C++", "problemMatcher": [] },
+    { "label": "NEXUS: test C++", "type": "shell", "command": "ctest --test-dir build --output-on-failure", "dependsOn": "NEXUS: build C++", "problemMatcher": [] }
+  ]
+}
