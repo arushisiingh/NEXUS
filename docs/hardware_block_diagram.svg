@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650" role="img" aria-labelledby="title desc">
+  <title id="title">NEXUS simulated hardware integration architecture</title>
+  <desc id="desc">Host computer and NEXUS API connect through simulated USB and localhost paths to a Nano RP2040 Connect, Basys 3 FPGA, and J-Link EDU Mini.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 Z" fill="#62d7ff"/></marker>
+    <marker id="debugArrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 Z" fill="#c58cff"/></marker>
+    <style>
+      .box{fill:#101d2c;stroke:#62d7ff;stroke-width:2;rx:14}.device{fill:#15283a;stroke:#8bb8ce;stroke-width:2;rx:14}
+      .label{font:600 18px Arial,sans-serif;fill:#e9f3f7;text-anchor:middle}.small{font:14px Arial,sans-serif;fill:#a9c3cf;text-anchor:middle}
+      .line{stroke:#62d7ff;stroke-width:3;fill:none;marker-end:url(#arrow)}.debug{stroke:#c58cff;stroke-width:3;fill:none;stroke-dasharray:9 7;marker-end:url(#debugArrow)}
+      .power{stroke:#f1bb68;stroke-width:3;fill:none;stroke-dasharray:9 7}.ground{stroke:#9aa9b1;stroke-width:2;fill:none;stroke-dasharray:4 6}
+    </style>
+  </defs>
+  <rect width="1200" height="650" fill="#08111c"/>
+  <text x="600" y="42" class="label">NEXUS Hardware Studio — simulated integration architecture</text>
+  <text x="600" y="68" class="small">No physical USB, serial, FPGA, SWD, or JTAG connection is opened</text>
+  <rect x="40" y="220" width="240" height="120" class="box"/><text x="160" y="260" class="label">HOST COMPUTER</text><text x="160" y="288" class="small">React UI + C++17 API</text><text x="160" y="312" class="small">localhost REST / simulated USB</text>
+  <rect x="390" y="100" width="250" height="105" class="device"/><text x="515" y="140" class="label">NANO RP2040 CONNECT</text><text x="515" y="168" class="small">3.3 V I/O · USB · SWD pads</text>
+  <rect x="390" y="260" width="250" height="105" class="device"/><text x="515" y="300" class="label">DIGILENT BASYS 3</text><text x="515" y="328" class="small">3.3 V FPGA I/O · USB-JTAG/UART</text>
+  <rect x="390" y="420" width="250" height="105" class="device"/><text x="515" y="460" class="label">SEGGER J-LINK EDU MINI</text><text x="515" y="488" class="small">USB · VTref · JTAG/SWD probe</text>
+  <path d="M280 260 C330 260 335 155 390 155" class="line"/><path d="M280 280 C330 280 335 315 390 315" class="line"/><path d="M280 300 C330 300 335 475 390 475" class="line"/><text x="330" y="230" class="small">DATA / CONTROL</text>
+  <path d="M640 475 C760 475 760 155 640 155" class="debug"/><path d="M640 475 C760 475 760 315 640 315" class="debug"/><text x="790" y="230" class="small">TCK / TMS / TDI / TDO / nRESET / VTref</text>
+  <rect x="865" y="110" width="270" height="100" class="box"/><text x="1000" y="150" class="label">REGULATED POWER</text><text x="1000" y="178" class="small">5 V input domains → board regulators</text><path d="M1000 210 L515 420" class="power"/><path d="M1000 210 L515 100" class="power"/>
+  <rect x="865" y="300" width="270" height="100" class="box"/><text x="1000" y="340" class="label">COMMON GROUND</text><text x="1000" y="368" class="small">Reference only; isolation not modeled</text><path d="M1000 400 L515 205" class="ground"/><path d="M1000 400 L515 365" class="ground"/><path d="M1000 400 L515 525" class="ground"/>
+  <text x="600" y="605" class="small">Solid cyan: data/control · Purple dashed: debug · Amber dashed: power · Gray dashed: ground</text>
+</svg>

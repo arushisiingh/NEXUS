@@ -20,6 +20,7 @@ REQUIRED_WINDOWS_FILES = (
     "Launch.exe",
     "bin/nexus-api.exe",
     "frontend/dist/index.html",
+    "docs/windows_packaging.md",
 )
 
 
@@ -61,31 +62,37 @@ def main() -> int:
     if output.exists():
         raise SystemExit(f"Refusing to overwrite existing archive: {output}")
 
-    source_dirs = ("core", "backend", "frontend/src", "tests", "scripts", ".vscode", ".github")
     with tempfile.TemporaryDirectory(prefix="nexus-submission-") as temp_name:
         staging = Path(temp_name)
         shutil.copytree(package, staging, dirs_exist_ok=True)
 
-        # Keep the verified runtime package at the archive root and include the
-        # repository source separately so runtime/source files cannot collide.
-        source_root = staging / "source"
-        for relative in source_dirs:
+        # Keep the verified runtime package at the archive root.  Put source
+        # code under a literal src/ directory while retaining tests, results,
+        # scripts, and configuration at predictable submission-level paths.
+        source_specs = (
+            ("core", "src/core"),
+            ("backend", "src/backend"),
+            ("frontend/src", "src/frontend/src"),
+            ("tests", "tests"),
+            ("scripts", "scripts"),
+            (".vscode", ".vscode"),
+            (".github", ".github"),
+            ("results", "results"),
+            ("config", "config"),
+            ("README.md", "README.md"),
+            ("CMakeLists.txt", "CMakeLists.txt"),
+            ("frontend/package.json", "frontend/package.json"),
+            ("frontend/package-lock.json", "frontend/package-lock.json"),
+        )
+        for relative, archive_relative in source_specs:
             source = root / relative
+            destination = staging / archive_relative
             if source.exists():
-                destination = source_root / relative
                 if source.is_dir():
                     shutil.copytree(source, destination, dirs_exist_ok=True)
                 else:
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(source, destination)
-        for relative in ("results", "config", "README.md", "CMakeLists.txt", "frontend/package.json", "frontend/package-lock.json"):
-            source = root / relative
-            destination = source_root / relative
-            if source.is_dir():
-                shutil.copytree(source, destination, dirs_exist_ok=True)
-            elif source.is_file():
-                destination.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(source, destination)
 
         with zipfile.ZipFile(output, "x", compression=zipfile.ZIP_DEFLATED) as archive:
             add_tree(archive, staging)

@@ -98,7 +98,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $cpackOutput = Join-Path $PWD 'build-win/cpack-output'
           New-Item -ItemType Directory -Force -Path $cpackOutput | Out-Null
-          cpack -B $cpackOutput --config build-win/CPackConfig.cmake -C Release --verbose 2>&1 |
+          cpack -B build-win/cpack-output --config build-win/CPackConfig.cmake -C Release --verbose 2>&1 |
             Tee-Object -FilePath build-win/logs/cpack.log
           if ($LASTEXITCODE -ne 0) { throw "CPack failed with exit code $LASTEXITCODE" }
           $validationLog = 'build-win/logs/cpack-validation.log'

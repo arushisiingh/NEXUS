@@ -62,7 +62,7 @@ The workflow does not claim interactive GUI verification: it tests the packaged 
 
 ## Current build and test result
 
-Successful workflow evidence: repository `arushisiingh/NEXUS`, commit `a261a03`, workflow `NEXUS Windows build`, run `#5`, runner `windows-2022`, architecture Windows x64. Uploaded artifacts were `NEXUS-Workbench-0.1.0-win64.zip` and `NEXUS-Windows-logs-a261a032bdf562d7dd33e38238c5dc0fa564cf32.zip`. The package and backend were inspected as PE32+ x64/runtime artifacts by the developer. Interactive GUI and physical clean-machine verification remain outstanding.
+Successful workflow evidence: repository `arushisiingh/NEXUS`, commit `a261a03`, workflow `NEXUS Windows build`, run `#5`, runner `windows-2022`, architecture Windows x64. MSVC compilation, CTest 6/6, frontend production build, CPack generation, required ZIP-entry validation, packaged backend startup, health HTTP 200, frontend HTTP 200, and 11/11 API integration checks passed. Uploaded artifacts were `NEXUS-Workbench-0.1.0-win64.zip` and `NEXUS-Windows-logs-a261a032bdf562d7dd33e38238c5dc0fa564cf32.zip`. The package and backend were inspected as PE32+ x64/runtime artifacts by the developer. Interactive GUI and physical clean-machine/offline verification remain outstanding and must not be inferred from the hosted run.
 
 ## Runtime behavior
 

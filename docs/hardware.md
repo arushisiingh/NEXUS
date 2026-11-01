@@ -12,6 +12,8 @@ The model uses one representative device from each relevant category, with claim
 
 The J-Link is a debug probe, not a generic compute board. It translates host debug commands into JTAG/SWD transactions and observes target reference voltage; it does not replace the microcontroller or FPGA and must not be treated as a power source.
 
+The labelled architecture figure is [hardware_block_diagram.svg](hardware_block_diagram.svg), and the expanded interface/pin-voltage matrix is [hardware_interface.md](hardware_interface.md).
+
 ## System architecture
 
 ```mermaid
