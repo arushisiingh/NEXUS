@@ -46,8 +46,8 @@ Run the workflow from the repository's **Actions** tab using **NEXUS Windows bui
 3. Configures the Release C++ build with the static MSVC runtime, builds the API, launcher, and tests, and runs CTest.
 4. Installs the package into a relative staging directory and runs CPack to create the Windows ZIP.
 5. Inspects executable dependencies and fails if an unstaged dynamic MSVC runtime is required.
-6. Starts `package\bin\nexus-api.exe` on port 8081, polls `/api/health` for up to 30 seconds, verifies the served frontend root, and runs `scripts/api_integration_test.py`.
-7. Terminates the packaged backend and uploads both the ZIP and preserved build/test logs.
+6. Starts `package\bin\nexus-api.exe` on port 8081, sets `NEXUS_API_BASE_URL=http://127.0.0.1:8081`, polls `/api/health` for up to 30 seconds, verifies the served frontend root, and runs `scripts/api_integration_test.py` in the same process-owning step so the runner cannot clean up the backend between readiness and integration checks.
+7. Prints backend exit code/stdout/stderr on failure, terminates the packaged backend in a `finally` block, and uploads both the ZIP and preserved build/test logs.
 
 CPack is explicitly invoked as:
 

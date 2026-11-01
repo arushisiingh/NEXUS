@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """Live NEXUS API integration checks; requires nexus-api to be running."""
 import json
+import os
 import sys
 from pathlib import Path
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
-BASE = "http://127.0.0.1:8081"
+BASE = os.environ.get(
+    "NEXUS_API_BASE_URL",
+    f"http://127.0.0.1:{os.environ.get('NEXUS_API_PORT', '8081')}",
+).rstrip("/")
 ROOT = Path(__file__).resolve().parents[1]
 
 def request(path, method="GET", payload=None):
