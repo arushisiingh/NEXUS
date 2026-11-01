@@ -1,6 +1,42 @@
 # NEXUS stabilization test results
 
-Run date: 2026-10-31, macOS Apple Silicon workspace. Windows results are not represented here.
+Run date: 2026-11-01 local evidence plus GitHub Actions Windows run #5 for commit `a261a03`. Windows CI evidence below was supplied from the successful hosted-runner log/artifact inspection.
+
+## GitHub Actions Windows verification
+
+Repository: `arushisiingh/NEXUS`
+
+Workflow: `NEXUS Windows build`
+
+Run: `#5`
+Runner: `windows-2022`, Windows x64, MSVC C++17
+
+```text
+MSVC C++ compilation: PASS
+CTest: 6/6 passed
+Frontend production build: PASS
+CPack ZIP generation: PASS
+Required ZIP entry validation: PASS
+Packaged backend startup: PASS
+Health endpoint: HTTP 200
+Frontend delivery through packaged backend: HTTP 200
+API integration: 11/11 passed
+Windows ZIP artifact upload: PASS
+Build/test logs artifact upload: PASS
+```
+
+Uploaded artifacts:
+
+- `NEXUS-Workbench-0.1.0-win64.zip`
+- `NEXUS-Windows-logs-a261a032bdf562d7dd33e38238c5dc0fa564cf32.zip`
+
+The uploaded package was inspected and contains `Launch.exe`, `bin/nexus-api.exe`, `frontend/dist/index.html`, production frontend assets, sample STL/temperature CSV data, documentation, README, and CMake configuration. `Launch.exe` and `nexus-api.exe` were confirmed as PE32+ x64 executables. The packaged health response was:
+
+```json
+{"application_name":"NEXUS","application_version":"0.1.0","backend_status":"online","cpp_standard":"C++17","api_status":"ok"}
+```
+
+This verifies automated packaged HTTP behavior, not an interactive desktop launch or physical clean-machine/offline evaluation.
 
 ## Clean C++ configure/build/CTest
 
@@ -85,7 +121,7 @@ The performance default was increased from 24 to 240 cases at mesh 40 after a li
 - Duplicate static-library linker warning: **RESOLVED** by removing redundant direct links where `nexus_performance` already propagates `nexus_thermal`.
 - Vite chunk-size warning: **NON-BLOCKING**. The application builds and renders; code splitting is a future optimization.
 - Initial sandboxed localhost probe: **ENVIRONMENTAL**. The restricted runner denied local socket access; the same integration command was rerun with local-process permission and passed.
-- Windows executable: **OUTSTANDING / NOT VERIFIED** because no Windows 11 build environment was available.
+- Windows CI executable and package: **VERIFIED** in hosted run #5; interactive GUI and physical clean-machine/offline behavior remain unverified.
 - npm audit findings from the existing dependency tree: **OUTSTANDING** and not force-fixed; dependency upgrades could destabilize the evaluated frontend.
 
 ## Browser smoke

@@ -6,7 +6,7 @@
 4. Open Performance Lab, keep the 240-case default, run the benchmark, show the worker table, scaling charts, numerical agreement, and export CSV.
 5. Open Hardware Studio, discover devices, connect the Nano RP2040 simulation, trigger SIMULATE TIMEOUT, show the fault telemetry, then Recover.
 6. Open Neural Lab, run the assignment, show forward values, finite-difference ALL PASS table, loss curve, and export CSV.
-7. Close with the limitations: hardware is simulated and Windows packaging is prepared but not verified on this macOS host.
+7. Close with the limitations: hardware is simulated; Windows CI packaging and automated HTTP verification passed, but interactive GUI and physical clean-machine verification were not performed.
 
 ## Evidence checklist
 

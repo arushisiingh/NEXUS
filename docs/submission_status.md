@@ -15,12 +15,16 @@ No final archive is created until the real candidate identifier is supplied. Thi
 ## Platform verification
 
 - macOS Apple Silicon: C++ build, CTest, frontend build, live API integration, static frontend serving, and browser smoke completed.
-- Windows 11 x64: **NOT VERIFIED**. The Windows launcher and CPack/install configuration are prepared, but a Windows compiler and clean-machine run were not available in this workspace.
+- Windows x64 hosted CI: **VERIFIED** in GitHub Actions run #5 for commit `a261a03`: compilation, CTest, frontend build, CPack ZIP, ZIP-entry validation, packaged backend startup, health/frontend HTTP checks, 11/11 API integration checks, and artifact uploads passed.
+- Interactive Windows GUI launch: **NOT VERIFIED**. The hosted runner did not perform a double-click desktop/browser test.
+- Physical clean-machine/offline evaluation: **NOT VERIFIED**.
 
 ## Developer actions before submission
 
 1. Supply the candidate identifier and rename the final archive accordingly.
 2. Review and sign `docs/ownership_statement.md`.
 3. Complete the handwritten backpropagation appendix and timestamped evidence checklist in `docs/demo_script.md`.
-4. Run the Windows clean-machine procedure in `docs/windows_packaging.md`.
-5. Re-run the final checks after any manual changes, then create the archive excluding build caches and `node_modules`.
+4. If possible, run the Windows clean-machine procedure in `docs/windows_packaging.md`; do not represent the hosted-runner result as that evidence.
+5. Obtain the verified Windows artifact from GitHub Actions and run `scripts/create_submission_zip.py` after supplying the real candidate ID.
+
+The final archive is not currently present in this workspace because the candidate ID and downloaded Windows artifact were not supplied. The script prepares `CandidateID_Workbench.zip` only after both are available.

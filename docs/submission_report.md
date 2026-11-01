@@ -1,8 +1,10 @@
 # NEXUS Unified Engineering Workbench — final report
 
+Verification note: GitHub Actions run #5 on `windows-2022` for commit `a261a03` passed Windows x64 compilation, CTest, frontend build, CPack packaging, packaged HTTP checks, 11/11 API integration checks, and artifact uploads. Interactive GUI and physical clean-machine verification were not performed.
+
 ## 1. Problem and architecture
 
-NEXUS is a local engineering workbench combining a React/Vite interface with a C++17 API and browser-independent core modules. The API validates requests and serializes results; numerical and processing responsibilities stay in `core/`. The same API can serve bundled frontend assets for a future Windows standalone package.
+NEXUS is a local engineering workbench combining a React/Vite interface with a C++17 API and browser-independent core modules. The API validates requests and serializes results; numerical and processing responsibilities stay in `core/`. The same API serves bundled frontend assets in the verified Windows standalone package.
 
 ## 2. Geometry processing
 
@@ -26,4 +28,4 @@ Neural Lab implements the exact one-sample `tanh` regression assignment with man
 
 ## 7. Testing, limitations, conclusion
 
-Clean CMake configuration, six focused CTest targets, frontend production build, live API integration, static frontend serving, and browser navigation smoke all pass on macOS. Remaining limitations are the lightweight HTTP server, non-streaming server cancellation, frontend bundle-size warning, no geometry derived export, and unverified Windows executable/clean-machine launch. The system is ready for evaluator review after the candidate supplies the identifier, handwritten appendix, and Windows evidence.
+Clean macOS CMake configuration, six focused CTest targets, frontend production build, live API integration, static frontend serving, and browser navigation smoke all pass. GitHub Actions run #5 additionally verified Windows x64 MSVC compilation, CTest, frontend build, CPack packaging, ZIP contents, packaged backend startup, HTTP health/frontend delivery, 11/11 API integration checks, and artifact uploads. Remaining limitations are the lightweight HTTP server, non-streaming server cancellation, frontend bundle-size warning, no geometry derived export, and lack of interactive GUI/physical clean-machine evidence. The system is ready for evaluator review after the candidate supplies the identifier and handwritten appendix.

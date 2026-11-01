@@ -64,7 +64,7 @@ Troubleshooting:
 
 ## One-click Windows launch
 
-The Windows launcher and packaging instructions are documented in [docs/windows_packaging.md](docs/windows_packaging.md). The Windows executable is **not verified** in this macOS environment. When built on Windows, the package uses `Launch.exe`, a bundled C++ backend, and bundled frontend assets; Node.js is not required on the evaluator machine.
+The Windows launcher and packaging instructions are documented in [docs/windows_packaging.md](docs/windows_packaging.md). GitHub Actions run #5 on commit `a261a03` successfully built and packaged the Windows x64 release, started the packaged backend, served the frontend, and passed all 11 API integration checks. The hosted runner did not perform an interactive double-click GUI test or a physical clean-machine test. The package uses `Launch.exe`, a bundled C++ backend, and bundled frontend assets; Node.js is not required on the evaluator machine.
 
 ## Source build and verification
 
@@ -186,9 +186,18 @@ See [docs/dependencies.md](docs/dependencies.md) for the initial version policy 
 - [Demo script](docs/demo_script.md)
 - [AI usage log](docs/ai_usage_log.md)
 
+After downloading and extracting the verified Windows artifact, create the candidate-named submission archive with:
+
+```text
+python3 scripts/create_submission_zip.py YOUR_CANDIDATE_ID --windows-package /path/to/extracted/NEXUS-Workbench-0.1.0-win64 --output-dir submission
+```
+
+The script rejects the placeholder identifier, refuses to overwrite an archive, validates required Windows files, and excludes `__MACOSX` metadata.
+
 ## Phase checklist
 
 - Completed and verified: foundation, backend integration, Geometry Lab, Thermal Studio, Performance Lab, Neural Lab, and simulated Hardware Studio.
-- Tested: clean CMake configure, C++ release build, six CTest targets, frontend production build, live API integration, static frontend serving, and browser navigation smoke test.
-- Partial: Windows standalone packaging configuration is prepared but not executable-verified because this environment is macOS.
-- Manual deliverables still required: candidate identifier, handwritten backpropagation appendix, timestamped evidence bundle, and Windows clean-machine test.
+- Tested locally: clean CMake configure, C++ release build, six CTest targets, frontend production build, live API integration, static frontend serving, and browser navigation smoke test.
+- Tested in GitHub Actions run #5: Windows x64 MSVC build, CTest, frontend build, CPack ZIP generation, required-entry validation, packaged backend startup, HTTP health/frontend delivery, 11/11 API integration checks, and artifact uploads.
+- Not verified: interactive Windows GUI launch and physical clean-machine/offline evaluation.
+- Manual deliverables still required: candidate identifier, handwritten backpropagation appendix, timestamped evidence bundle, and final archive creation.

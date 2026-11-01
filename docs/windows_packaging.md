@@ -2,7 +2,7 @@
 
 ## Verification status
 
-Status: **CI CONFIGURED; NOT YET EXECUTED IN THIS WORKSPACE**. Development and local builds are macOS builds. The GitHub Actions workflow at `.github/workflows/windows-build.yml` uses a hosted `windows-2022` runner to perform the Windows build, tests, packaged-backend smoke test, and ZIP artifact upload. Until that workflow has completed successfully, the Windows executable remains **NOT VERIFIED**.
+Status: **WINDOWS CI VERIFIED; INTERACTIVE GUI NOT VERIFIED**. GitHub Actions workflow `NEXUS Windows build`, run #5 on commit `a261a03`, completed successfully on `windows-2022` x64. It verified MSVC C++17 compilation, CTest, frontend build, CPack ZIP generation, required ZIP entries, packaged backend startup, HTTP health/frontend delivery, 11/11 API integration checks, and artifact uploads. It did not perform a physical double-click GUI test or clean-machine/offline evaluation.
 
 ## Required build environment
 
@@ -35,7 +35,7 @@ Copy-Item -Recurse -Force docs package\docs
 Copy-Item -Recurse -Force data package\data
 ```
 
-The expected package contains `Launch.exe`, `bin\nexus-api.exe`, `frontend\dist\index.html`, assets, documentation, sample data, and no developer-specific absolute paths.
+The verified package contains `Launch.exe`, `bin\nexus-api.exe`, `frontend\dist\index.html`, production assets, documentation, sample data, and no developer-specific absolute paths. The workflow selected the static MSVC runtime and inspected the backend dependencies; no dynamic MSVC runtime DLL was required by that configuration. System Windows libraries remain operating-system dependencies and are not claimed as bundled application files.
 
 ## GitHub Actions workflow
 
@@ -62,11 +62,11 @@ The workflow does not claim interactive GUI verification: it tests the packaged 
 
 ## Current build and test result
 
-The workflow was added and its YAML syntax was checked locally. The macOS regression path was reconfigured and rebuilt successfully after the Windows-only CMake target-name change. The Windows runner has **not yet been executed from this repository**, so there is no honest Windows CTest, ZIP, or artifact result to report here yet. After a successful Actions run, record the run URL, CTest summary, health response, frontend HTTP status, ZIP artifact name, and any warnings in `docs/test_results.md`.
+Successful workflow evidence: repository `arushisiingh/NEXUS`, commit `a261a03`, workflow `NEXUS Windows build`, run `#5`, runner `windows-2022`, architecture Windows x64. Uploaded artifacts were `NEXUS-Workbench-0.1.0-win64.zip` and `NEXUS-Windows-logs-a261a032bdf562d7dd33e38238c5dc0fa564cf32.zip`. The package and backend were inspected as PE32+ x64/runtime artifacts by the developer. Interactive GUI and physical clean-machine verification remain outstanding.
 
 ## Runtime behavior
 
-`Launch.exe` starts the backend without a terminal window, sets a package-relative static asset root, and opens the browser at port 8081. The C++ API serves `/` and `/assets/*` directly from the bundled frontend assets, so Node.js and Vite are not required on the evaluator machine. `NEXUS_API_PORT` or a command-line port can be used for source launches; the launcher currently uses 8081 and should be extended with a port-conflict dialog if the clean-machine test finds a conflict.
+`Launch.exe` starts `bin\nexus-api.exe` without a terminal window, sets `NEXUS_STATIC_ROOT` to the package-relative `frontend\dist` directory, and calls the Windows shell to open `http://127.0.0.1:8081/` in the default browser. The C++ API serves `/` and `/assets/*` directly from the bundled frontend assets, so Node.js and Vite are not required on the evaluator machine. `NEXUS_API_PORT` or a command-line port can be used for source launches; the launcher currently uses 8081 and has no implemented port-conflict dialog.
 
 The launcher remains associated with the backend process while the backend runs. A clean-machine test must confirm the expected shutdown behavior and should terminate the launcher/backend together before repeating a launch.
 
