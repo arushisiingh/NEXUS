@@ -96,13 +96,23 @@ jobs:
       - name: Generate CPack Windows ZIP
         run: |
           $ErrorActionPreference = 'Stop'
-          cpack --config build-win/CPackConfig.cmake -C Release --verbose 2>&1 | Tee-Object -FilePath build-win/logs/cpack.log
+          $cpackOutput = Join-Path $PWD 'build-win/cpack-output'
+          New-Item -ItemType Directory -Force -Path $cpackOutput | Out-Null
+          cpack -B $cpackOutput --config build-win/CPackConfig.cmake -C Release --verbose 2>&1 |
+            Tee-Object -FilePath build-win/logs/cpack.log
           if ($LASTEXITCODE -ne 0) { throw "CPack failed with exit code $LASTEXITCODE" }
           $validationLog = 'build-win/logs/cpack-validation.log'
-          $archives = @(Get-ChildItem -Path build-win -Recurse -Filter 'NEXUS-Workbench-*.zip' -File |
-            Where-Object { $_.FullName -notmatch '[\\/]+artifacts[\\/]' })
+          $foundFiles = @(Get-ChildItem -Path $cpackOutput -Recurse -File)
+          $archives = @($foundFiles | Where-Object { $_.Name -like 'NEXUS-Workbench-*.zip' })
           if ($archives.Count -ne 1) {
-            throw "Expected exactly one NEXUS Windows ZIP recursively under build-win, found $($archives.Count)"
+            $foundDescription = if ($foundFiles.Count -eq 0) {
+              '(none)'
+            } else {
+              ($foundFiles | ForEach-Object { $_.FullName }) -join [Environment]::NewLine
+            }
+            Add-Content $validationLog "CPack output directory: $cpackOutput"
+            Add-Content $validationLog "Files found:`n$foundDescription"
+            throw "Expected exactly one NEXUS Windows ZIP in $cpackOutput, found $($archives.Count). Files found:`n$foundDescription"
           }
           $generatedArchive = $archives[0]
           Add-Content $validationLog "Generated archive: $($generatedArchive.FullName)"
