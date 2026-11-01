@@ -102,7 +102,7 @@ jobs:
             Tee-Object -FilePath build-win/logs/cpack.log
           if ($LASTEXITCODE -ne 0) { throw "CPack failed with exit code $LASTEXITCODE" }
           $validationLog = 'build-win/logs/cpack-validation.log'
-          $foundFiles = @(Get-ChildItem -Path $cpackOutput -Recurse -File)
+          $foundFiles = @(Get-ChildItem -Path $cpackOutput -File)
           $archives = @($foundFiles | Where-Object { $_.Name -like 'NEXUS-Workbench-*.zip' })
           if ($archives.Count -ne 1) {
             $foundDescription = if ($foundFiles.Count -eq 0) {

@@ -56,7 +56,7 @@ New-Item -ItemType Directory -Force build-win/cpack-output
 cpack -B build-win/cpack-output --config build-win/CPackConfig.cmake -C Release --verbose
 ```
 
-The generated ZIP is searched only inside `build-win/cpack-output`, copied to `build-win/artifacts/NEXUS-Windows.zip`, and uploaded as the artifact `NEXUS-Windows-<commit-sha>`. Build logs, including CPack discovery and ZIP-entry validation, are uploaded as `NEXUS-Windows-logs-<commit-sha>` even when a workflow step fails. If the exact-one-archive validation fails, the validation log lists every file found in the dedicated CPack output directory.
+The generated ZIP is searched only among direct files in `build-win/cpack-output` (CPack's `_CPack_Packages` subtree is not enumerated), copied to `build-win/artifacts/NEXUS-Windows.zip`, and uploaded as the artifact `NEXUS-Windows-<commit-sha>`. Build logs, including CPack discovery and ZIP-entry validation, are uploaded as `NEXUS-Windows-logs-<commit-sha>` even when a workflow step fails. If the exact-one-archive validation fails, the validation log lists every direct file found in the dedicated CPack output directory.
 
 The workflow does not claim interactive GUI verification: it tests the packaged backend and static frontend over HTTP. It also does not claim a clean physical Windows machine; the runner is an ephemeral hosted CI environment.
 
