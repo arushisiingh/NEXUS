@@ -49,7 +49,7 @@ Run the workflow from the repository's **Actions** tab using **NEXUS Windows bui
 6. Starts `package\bin\nexus-api.exe` on port 8081, polls `/api/health` for up to 30 seconds, verifies the served frontend root, and runs `scripts/api_integration_test.py`.
 7. Terminates the packaged backend and uploads both the ZIP and preserved build/test logs.
 
-The generated ZIP is uploaded as `NEXUS-Windows-<commit-sha>`. Build logs are uploaded as `NEXUS-Windows-logs-<commit-sha>` even when a workflow step fails.
+The generated ZIP is recursively located under the CPack output tree, copied to `build-win/artifacts/NEXUS-Windows.zip`, and uploaded as the artifact `NEXUS-Windows-<commit-sha>`. Build logs, including CPack discovery and ZIP-entry validation, are uploaded as `NEXUS-Windows-logs-<commit-sha>` even when a workflow step fails.
 
 The workflow does not claim interactive GUI verification: it tests the packaged backend and static frontend over HTTP. It also does not claim a clean physical Windows machine; the runner is an ephemeral hosted CI environment.
 

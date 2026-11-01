@@ -98,18 +98,29 @@ jobs:
           $ErrorActionPreference = 'Stop'
           cpack --config build-win/CPackConfig.cmake -C Release --verbose 2>&1 | Tee-Object -FilePath build-win/logs/cpack.log
           if ($LASTEXITCODE -ne 0) { throw "CPack failed with exit code $LASTEXITCODE" }
-          $archives = @(Get-ChildItem build-win -Filter '*.zip' -File)
-          if ($archives.Count -ne 1) { throw "Expected exactly one Windows ZIP, found $($archives.Count)" }
-          Add-Content build-win/logs/cpack.log "Generated archive: $($archives[0].FullName)"
+          $validationLog = 'build-win/logs/cpack-validation.log'
+          $archives = @(Get-ChildItem -Path build-win -Recurse -Filter 'NEXUS-Workbench-*.zip' -File |
+            Where-Object { $_.FullName -notmatch '[\\/]+artifacts[\\/]' })
+          if ($archives.Count -ne 1) {
+            throw "Expected exactly one NEXUS Windows ZIP recursively under build-win, found $($archives.Count)"
+          }
+          $generatedArchive = $archives[0]
+          Add-Content $validationLog "Generated archive: $($generatedArchive.FullName)"
+
+          New-Item -ItemType Directory -Force -Path build-win/artifacts | Out-Null
+          $stagedArchive = Join-Path $PWD 'build-win/artifacts/NEXUS-Windows.zip'
+          Copy-Item -LiteralPath $generatedArchive.FullName -Destination $stagedArchive -Force
+          Add-Content $validationLog "Staged archive: $stagedArchive"
 
           Add-Type -AssemblyName System.IO.Compression.FileSystem
-          $archive = [System.IO.Compression.ZipFile]::OpenRead($archives[0].FullName)
+          $archive = [System.IO.Compression.ZipFile]::OpenRead($stagedArchive)
           try {
             $names = @($archive.Entries | ForEach-Object {
               ($_.FullName -replace '\\', '/') -replace '^[^/]+/', ''
             })
             foreach ($required in @('Launch.exe', 'bin/nexus-api.exe', 'frontend/dist/index.html', 'docs/windows_packaging.md')) {
               if (-not ($names -contains $required)) { throw "ZIP is missing $required. Contents: $($names -join ', ')" }
+              Add-Content $validationLog "Validated ZIP entry: $required"
             }
           } finally {
             $archive.Dispose()
@@ -167,7 +178,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: NEXUS-Windows-${{ github.sha }}
-          path: build-win/*.zip
+          path: build-win/artifacts/NEXUS-Windows.zip
           if-no-files-found: error
 
       - name: Upload build and test logs
